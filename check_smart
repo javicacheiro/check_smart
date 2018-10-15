@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Add here any additional options required to run smartctl
+OPTS=""
+
 parse() {
     egrep '^(SMART STATUS RETURN:|SMART overall-health self-assessment test result:)'
 }
@@ -25,10 +28,17 @@ DISKS=$(lsblk -nio KNAME,TYPE | grep disk | awk '{print $1}')
 #DISKS=$(lsblk -Snio KNAME)
 
 ERRORS=0
+WARNINGS=0
 FAILURES=""
 
 for disk in $DISKS; do
-    RESULT=$(smartctl -H /dev/$disk | parse | verify)
+    OUTPUT=$(smartctl $OPTS -H /dev/$disk)
+    RETVAL="$?"
+    if [[ $RETVAL != 0 ]]; then
+        FAILURES+=$disk
+        WARNINGS=1
+    fi
+    RESULT=$(echo $OUTPUT | parse | verify)
     if [[ -n $RESULT ]]; then
         FAILURES+=$disk
         ERRORS=1
@@ -38,6 +48,9 @@ done
 if [[ $ERRORS != 0 ]]; then
     echo "CRITICAL: $FAILURES"
     exit 2
+elif [[ $WARNINGS != 0 ]]; then
+    echo "WARNING: $FAILURES"
+    exit 1
 else
     echo "OK"
     exit 0
