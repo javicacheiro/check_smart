@@ -4,7 +4,7 @@
 OPTS=""
 
 parse() {
-    egrep '^(SMART STATUS RETURN:|SMART overall-health self-assessment test result:)'
+    egrep '^(SMART STATUS RETURN:|SMART overall-health self-assessment test result:|SMART Health Status:)'
 }
 
 # Validate that 2 status lines are returned by parse
@@ -20,7 +20,7 @@ validate() {
 }
 
 verify() {
-    egrep -v '(SMART overall-health self-assessment test result: PASSED|SMART STATUS RETURN: incomplete response, ATA output registers missing)'
+    egrep -v '(SMART overall-health self-assessment test result: PASSED|SMART STATUS RETURN: incomplete response, ATA output registers missing|SMART Health Status: OK)'
 }
 
 DISKS=$(lsblk -nio KNAME,TYPE | grep disk | awk '{print $1}')
